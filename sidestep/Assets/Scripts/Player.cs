@@ -4,16 +4,19 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    //keyBoard contains all of the characters we'd like to pick random keys from
     private string keyBoard = "qwertyuiopasdfghjkl;zxcvbnm,./";
+
+    //these help us keep track of active keys
     public KeyCode playerUp = KeyCode.W;
     public KeyCode playerLeft = KeyCode.A;
     public KeyCode playerRight = KeyCode.D;
+    public KeyCode nextRandKey;
+
     public int lastDir = 0;
     public TMPro.TextMeshPro keySwitch;
     private bool isStuck = false;
     private float collisionTimer = 0f;
-    public KeyCode nextRandKey;
-    
 
 
     // Start is called before the first frame update
@@ -28,8 +31,10 @@ public class Player : MonoBehaviour
         //Debug.Log(keyBoard[KeyGen()]);
         if (Input.GetKey(KeyCode.W))
         {
-
+            //jump would potentially go here, 
+            //but this is included so nothing happens when W is pressed
         }
+
         if (Input.GetKeyDown(playerRight))
         {
             GetComponent<CharacterController>().Move(new Vector3(2.5f, 0f, 0f));
@@ -38,14 +43,26 @@ public class Player : MonoBehaviour
         {
             GetComponent<CharacterController>().Move(new Vector3(-2.5f, 0f, 0f));
         }
+
+        //Running in the 90's
         GetComponent<CharacterController>().Move(new Vector3(0f, 0f, 1f));
+
         //Debug.Log(collisionTimer);
 
         collisionTimer++;
-        if ((int)collisionTimer%300 == 0)
+
+        //if you go a certain amount of time without being stuck on on obstacle...
+        if ((int)collisionTimer%400 == 0 && !isStuck)
         {
+            //we change our keys!!
+
+            //KeyGen gets a random character position
             int randNum = KeyGen();
+
+            //TryGetValue uses that character position to get a key from the dictionary
             chartoKeycode.TryGetValue(keyBoard[randNum], out nextRandKey);
+
+            //We check what direction was last and assign the key~
             if (lastDir == 0)
             {
                 playerLeft = nextRandKey;
@@ -56,12 +73,16 @@ public class Player : MonoBehaviour
                 lastDir = 0;
             }
             Debug.Log(nextRandKey);
+
+            //updating the text
             DisplayKey(keyBoard[randNum]);
         }
     }
 
     int KeyGen()
     {
+        //this uses the keyboard string's length so you don't need to edit
+        //any numbers in the method if you want to change the keys used
         int stringVal = (int)Random.Range(0f, (float)keyBoard.Length);
         return stringVal;
     }
@@ -70,6 +91,8 @@ public class Player : MonoBehaviour
     void DisplayKey(char keyIndex)
     {
         string dir;
+
+        //this controls the alternation between left and right
         if (lastDir == 1)
         {
             dir = "left";
@@ -81,7 +104,8 @@ public class Player : MonoBehaviour
         {
             dir = "this will never happen!";
         }
-        keySwitch.text = dir + " is now... " + keyIndex.ToString();
+        //updates the textmesh
+        keySwitch.text = dir + " is now " + keyIndex.ToString();
     }
 
     public void OnTriggerEnter(Collider other)
