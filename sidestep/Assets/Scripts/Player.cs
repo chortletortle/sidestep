@@ -69,7 +69,7 @@ public class Player : MonoBehaviour
         }
 
         //Running in the 90's
-        GetComponent<CharacterController>().Move(new Vector3(0f, 0f, 1f));
+        GetComponent<CharacterController>().Move(new Vector3(0f, 0f, .9f));
 
         //Debug.Log(collisionTimer);
         collisionTimer++;
@@ -79,7 +79,7 @@ public class Player : MonoBehaviour
         score.text = "Score: " + distanceScore.ToString();
         livesLeft.text = "Lives Left: " + (curLives - stuckCount).ToString();
 
-        if ( distanceScore > 1500 && (int)distanceScore % 100 == 0 && !isStuck)
+        if ( distanceScore > 1500 && (int)distanceScore % 250 == 0 && !isStuck)
         {
             AddNewKeys(lastDir);
         }
@@ -205,19 +205,19 @@ public class Player : MonoBehaviour
 
     void AddNewKeys(int dir)
     {
-        if (dir == 0)
+        if (dir == 0 && waitingLeft.Length != 0)
         {
             int randNum = KeyGen(waitingLeft);
             currentLeftKeys += waitingLeft[randNum];
-            waitingLeft.Remove(randNum);
-            Debug.Log("l: "+currentLeftKeys);
+            waitingLeft = waitingLeft.Remove(randNum, 1);
+            //Debug.Log("l: "+waitingLeft);
         }
-        else
+        else if (dir == 1 && waitingRight.Length != 0)
         {
             int randNum = KeyGen(waitingRight);
             currentRightKeys += waitingRight[randNum];
-            waitingRight.Remove(randNum);
-            Debug.Log("r: " + currentRightKeys);
+            waitingRight = waitingRight.Remove(randNum,1);
+            //Debug.Log("r: " + waitingRight);
         }
 
 
