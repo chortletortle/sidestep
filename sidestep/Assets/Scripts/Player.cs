@@ -6,23 +6,47 @@ public class Player : MonoBehaviour
 {
     //keyBoard contains all of the characters we'd like to pick random keys from
     private string keyBoard = "qwertyuiopasdfghjkl;zxcvbnm,./";
+    private string LeftSideKeyBoard = "qwertasdfgzxcvb";
+    private string RightSideKeyBoard = "yuiophjkl;nm,./";
+
+    //what keys on the left and right are we pulling from
+    private string currentLeftKeys;
+    private string currentRightKeys;
+
+    //what keys we have left to add, increasing difficulty
+    private string waitingLeft;
+    private string waitingRight;
 
     //these help us keep track of active keys
     public KeyCode playerUp = KeyCode.W;
     public KeyCode playerLeft = KeyCode.A;
     public KeyCode playerRight = KeyCode.D;
     public KeyCode nextRandKey;
+    public KeyCode prevRandKey;
 
     public int lastDir = 0;
     public TMPro.TextMeshPro keySwitch;
+    public TMPro.TextMeshPro score;
+    public TMPro.TextMeshPro livesLeft;
     private bool isStuck = false;
+
     private float collisionTimer = 0f;
+    private float distanceScore = 0f;
+    private float stuckCount = 0f;
+    private float curLives = 9f;
+
+    private Vector3 resetPt;
 
 
     // Start is called before the first frame update
     void Start()
     {
-
+        //Assigning the bucket system
+        currentLeftKeys = LeftSideKeyBoard;
+        currentRightKeys = RightSideKeyBoard;
+        waitingLeft = RightSideKeyBoard;
+        waitingRight = LeftSideKeyBoard;
+        resetPt = this.transform.position;
     }
 
     // Update is called once per frame
@@ -48,11 +72,17 @@ public class Player : MonoBehaviour
         GetComponent<CharacterController>().Move(new Vector3(0f, 0f, 1f));
 
         //Debug.Log(collisionTimer);
-
         collisionTimer++;
+        if (!isStuck) distanceScore++;
+
+        //handling ui
+        score.text = "Score: " + distanceScore.ToString();
+        livesLeft.text = "Lives Left: " + (curLives - stuckCount).ToString();
+
+
 
         //if you go a certain amount of time without being stuck on on obstacle...
-        if ((int)collisionTimer%400 == 0 && !isStuck)
+        if ((int)collisionTimer % 400 == 0 && !isStuck)
         {
             //we change our keys!!
 
@@ -67,7 +97,8 @@ public class Player : MonoBehaviour
             {
                 playerLeft = nextRandKey;
                 lastDir = 1;
-            } else if (lastDir == 1)
+            }
+            else if (lastDir == 1)
             {
                 playerRight = nextRandKey;
                 lastDir = 0;
@@ -76,6 +107,45 @@ public class Player : MonoBehaviour
 
             //updating the text
             DisplayKey(keyBoard[randNum]);
+        }
+
+        //ending
+        if ((int)curLives == (int)stuckCount)
+        {
+            keySwitch.text = "Game Over\nPress any key to reset";
+            playerLeft = KeyCode.Equals;
+            playerRight = KeyCode.Equals;
+            if (Input.anyKeyDown)
+            {
+                GameObject[] floors = GameObject.FindGameObjectsWithTag("Generated");
+                GameObject[] obs = GameObject.FindGameObjectsWithTag("Obstacle");
+
+                foreach (GameObject floor in floors) {
+                    Destroy(floor);
+                }
+
+                foreach (GameObject floor in obs)
+                {
+                    Destroy(floor);
+                }
+
+                keySwitch.text = "";
+
+                this.transform.position = resetPt;
+                curLives = 9;
+                stuckCount = 0;
+                distanceScore = 0;
+                collisionTimer = 0;
+                playerLeft = KeyCode.A;
+                playerRight = KeyCode.D;
+                isStuck = false;
+                lastDir = 0;
+
+                currentLeftKeys = LeftSideKeyBoard;
+                currentRightKeys = RightSideKeyBoard;
+                waitingLeft = RightSideKeyBoard;
+                waitingRight = LeftSideKeyBoard;
+            }
         }
     }
 
@@ -96,7 +166,8 @@ public class Player : MonoBehaviour
         if (lastDir == 1)
         {
             dir = "left";
-        } else if (lastDir == 0)
+        }
+        else if (lastDir == 0)
         {
             dir = "right";
         }
@@ -112,8 +183,9 @@ public class Player : MonoBehaviour
     {
         if (other.tag == "Obstacle")
         {
-            //Debug.Log("we hit");
+            Debug.Log("we hit " + stuckCount);
             isStuck = true;
+            stuckCount++;
         }
 
 
