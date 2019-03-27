@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
     public KeyCode nextRandKey;
     public KeyCode prevRandKey;
 
-    public int lastDir = 0;
+    private int lastDir = 0;
     public TMPro.TextMeshPro keySwitch;
     public TMPro.TextMeshPro score;
     public TMPro.TextMeshPro livesLeft;
@@ -79,35 +79,56 @@ public class Player : MonoBehaviour
         score.text = "Score: " + distanceScore.ToString();
         livesLeft.text = "Lives Left: " + (curLives - stuckCount).ToString();
 
+        if ( distanceScore > 1500 && (int)distanceScore % 100 == 0 && !isStuck)
+        {
+            AddNewKeys(lastDir);
+        }
 
-
-        //if you go a certain amount of time without being stuck on on obstacle...
-        if ((int)collisionTimer % 400 == 0 && !isStuck)
+            //if you go a certain amount of time without being stuck on on obstacle...
+            if ((int)collisionTimer % 400 == 0 && !isStuck)
         {
             //we change our keys!!
-
-            //KeyGen gets a random character position
-            int randNum = KeyGen();
-
-            //TryGetValue uses that character position to get a key from the dictionary
-            chartoKeycode.TryGetValue(keyBoard[randNum], out nextRandKey);
-
-            //We check what direction was last and assign the key~
+            int randNum;
             if (lastDir == 0)
             {
+                randNum = KeyGen(currentLeftKeys);
+                chartoKeycode.TryGetValue(currentLeftKeys[randNum], out nextRandKey);
+                prevRandKey = playerLeft;
                 playerLeft = nextRandKey;
-                lastDir = 1;
-            }
-            else if (lastDir == 1)
-            {
-                playerRight = nextRandKey;
-                lastDir = 0;
-            }
-            Debug.Log(nextRandKey);
+                DisplayKey(currentLeftKeys[randNum]);
 
-            //updating the text
-            DisplayKey(keyBoard[randNum]);
+            } else if (lastDir == 1)
+            {
+                randNum = KeyGen(currentRightKeys);
+                chartoKeycode.TryGetValue(currentRightKeys[randNum], out nextRandKey);
+                prevRandKey = playerRight;
+                playerRight = nextRandKey;
+                DisplayKey(currentRightKeys[randNum]);
+            }
+
+            ////KeyGen gets a random character position
+            //int randNum = KeyGen(keyBoard);
+
+            ////TryGetValue uses that character position to get a key from the dictionary
+            //chartoKeycode.TryGetValue(keyBoard[randNum], out nextRandKey);
+
+            ////We check what direction was last and assign the key~
+            //if (lastDir == 0)
+            //{
+            //    playerLeft = nextRandKey;
+            //    lastDir = 1;
+            //}
+            //else if (lastDir == 1)
+            //{
+            //    playerRight = nextRandKey;
+            //    lastDir = 0;
+            //}
+            //Debug.Log(nextRandKey);
+
+            ////updating the text
+            //DisplayKey(keyBoard[randNum]);
         }
+
 
         //ending
         if ((int)curLives == (int)stuckCount)
@@ -117,6 +138,7 @@ public class Player : MonoBehaviour
             playerRight = KeyCode.Equals;
             if (Input.anyKeyDown)
             {
+                //delete all the stuff!!!
                 GameObject[] floors = GameObject.FindGameObjectsWithTag("Generated");
                 GameObject[] obs = GameObject.FindGameObjectsWithTag("Obstacle");
 
@@ -149,11 +171,11 @@ public class Player : MonoBehaviour
         }
     }
 
-    int KeyGen()
+    int KeyGen(string keys)
     {
         //this uses the keyboard string's length so you don't need to edit
         //any numbers in the method if you want to change the keys used
-        int stringVal = (int)Random.Range(0f, (float)keyBoard.Length);
+        int stringVal = (int)Random.Range(0f, (float)keys.Length);
         return stringVal;
     }
 
@@ -163,13 +185,15 @@ public class Player : MonoBehaviour
         string dir;
 
         //this controls the alternation between left and right
-        if (lastDir == 1)
+        if (lastDir == 0)
         {
             dir = "left";
+            lastDir = 1;
         }
-        else if (lastDir == 0)
+        else if (lastDir == 1)
         {
             dir = "right";
+            lastDir = 0;
         }
         else
         {
@@ -179,11 +203,30 @@ public class Player : MonoBehaviour
         keySwitch.text = dir + " is now " + keyIndex.ToString();
     }
 
+    void AddNewKeys(int dir)
+    {
+        if (dir == 0)
+        {
+            int randNum = KeyGen(waitingLeft);
+            currentLeftKeys += waitingLeft[randNum];
+            waitingLeft.Remove(randNum);
+            Debug.Log("l: "+currentLeftKeys);
+        }
+        else
+        {
+            int randNum = KeyGen(waitingRight);
+            currentRightKeys += waitingRight[randNum];
+            waitingRight.Remove(randNum);
+            Debug.Log("r: " + currentRightKeys);
+        }
+
+
+    }
+
     public void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Obstacle")
         {
-            Debug.Log("we hit " + stuckCount);
             isStuck = true;
             stuckCount++;
         }
